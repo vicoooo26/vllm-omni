@@ -4,6 +4,7 @@
 import time
 from typing import Any
 
+from ..utils.env import expand_env_value
 from ..utils.logging import get_connector_logger
 from .base import OmniConnectorBase
 
@@ -30,7 +31,12 @@ class MooncakeStoreConnector(OmniConnectorBase):
             )
 
         self.config = config
-        self.host = config.get("host", "127.0.0.1")
+        # The transfer-engine listen address registered with the mooncake
+        # master at setup() must be reachable from other stage pods, so a
+        # cross-pod deployment can pin it to the local pod IP via an env var
+        # (e.g. MC_STORE_HOST=$(POD_IP)). strict mode fails loudly on an
+        # unset var instead of leaking "$VAR" into the transfer engine.
+        self.host = expand_env_value(config.get("host", "127.0.0.1"), strict=True, field_name="host")
         self.metadata = config.get("metadata_server", "http://127.0.0.1:8080/metadata")
         self.master = config.get("master", "127.0.0.1:50051")
         self.segment = config.get("segment", 512 * 1024 * 1024)  # 512MB
