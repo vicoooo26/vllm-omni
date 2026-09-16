@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+# SPDX-FileCopyrightText: Copyright contributors to the vLLM-Omni project
 
 import time
 from typing import Any
@@ -37,6 +37,8 @@ class MooncakeStoreConnector(OmniConnectorBase):
         self.localbuf = config.get("localbuf", 64 * 1024 * 1024)  # 64MB
         self.proto = config.get("proto", "tcp")
         self.rdma = config.get("rdma", "")
+        # ChunkTransferAdapter reads connector.stage_id when async_chunk is on.
+        self.stage_id = config.get("stage_id", -1)
 
         self.store: MooncakeDistributedStore | None = None
         self.pin: ReplicateConfig | None = None
