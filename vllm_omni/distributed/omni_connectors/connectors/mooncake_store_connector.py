@@ -30,6 +30,11 @@ class MooncakeStoreConnector(OmniConnectorBase):
                 "Please ensure the 'mooncake' package is installed in your environment."
             )
 
+        # Set before config parsing: close() reads these, and __del__ runs
+        # even when __init__ aborts on a bad config.
+        self.store: MooncakeDistributedStore | None = None
+        self.pin: ReplicateConfig | None = None
+
         self.config = config
         # The transfer-engine listen address registered with the mooncake
         # master at setup() must be reachable from other stage pods, so a
@@ -45,9 +50,6 @@ class MooncakeStoreConnector(OmniConnectorBase):
         self.rdma = config.get("rdma", "")
         # ChunkTransferAdapter reads connector.stage_id when async_chunk is on.
         self.stage_id = config.get("stage_id", -1)
-
-        self.store: MooncakeDistributedStore | None = None
-        self.pin: ReplicateConfig | None = None
 
         self._metrics = {
             "puts": 0,
